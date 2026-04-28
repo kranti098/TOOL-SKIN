@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<title>KEROxI DEVELOPER — Admin Panel</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Orbitron:wght@400;600;700;900&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --bg: #020c06;
+  --bg2: #050f08;
+  --card: #071410;
+  --card2: #0a1d14;
+  --border: #0f2e1e;
+  --border2: #1a4a30;
+  --green: #10b981;
+  --green2: #059669;
+  --green3: #34d399;
+  --red: #ef4444;
+  --yellow: #f59e0b;
+  --text: #d1fae5;
+  --text-dim: #6ee7b7;
+  --text-muted: #4a8c6a;
+  --glow: 0 0 10px #10b98160, 0 0 30px #10b98130;
+  --glow-sm: 0 0 6px #10b98150;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{background:var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;min-height:100vh;overflow-x:hidden;}
+
+/* SCANLINES */
+body::before{
+  content:'';position:fixed;top:0;left:0;width:100%;height:100%;
+  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.07) 2px,rgba(0,0,0,.07) 4px);
+  pointer-events:none;z-index:9999;
+}
+body::after{
+  content:'';position:fixed;top:0;left:0;width:100%;height:100%;
+  background-image:linear-gradient(rgba(16,185,129,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(16,185,129,.03) 1px,transparent 1px);
+  background-size:32px 32px;pointer-events:none;z-index:0;
+}
+
+/* ── PIN SCREEN ───────────────────────────────────────────────── */
+#pinScreen{
+  position:fixed;inset:0;z-index:500;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;
+}
+.pin-logo{font-family:'Orbitron',sans-serif;font-size:26px;font-weight:900;color:var(--green);text-shadow:var(--glow);text-align:center;}
+.pin-sub{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-muted);letter-spacing:3px;}
+.pin-box{background:var(--card);border:1px solid var(--border2);border-radius:16px;padding:28px 24px;width:90%;max-width:340px;display:flex;flex-direction:column;gap:16px;}
+.pin-label{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-dim);letter-spacing:2px;}
+.pin-input-wrap{position:relative;}
+.pin-input{
+  width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:8px;
+  padding:14px 16px;font-family:'JetBrains Mono',monospace;font-size:20px;letter-spacing:8px;
+  color:var(--green);outline:none;transition:border-color .2s;
+}
+.pin-input:focus{border-color:var(--green);box-shadow:var(--glow-sm);}
+.pin-btn{
+  padding:14px;border-radius:8px;border:none;background:linear-gradient(135deg,var(--green),var(--green2));
+  color:#fff;font-family:'Orbitron',sans-serif;font-size:13px;font-weight:700;letter-spacing:2px;cursor:pointer;
+  transition:all .2s;
+}
+.pin-btn:hover{box-shadow:var(--glow);transform:translateY(-1px);}
+.pin-error{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--red);text-align:center;display:none;}
+.pin-error.show{display:block;}
+
+/* ── MAIN APP ────────────────────────────────────────────────── */
+#mainApp{display:none;position:relative;z-index:10;}
+#mainApp.show{display:block;}
+
+/* TOPBAR */
+.topbar{
+  background:linear-gradient(90deg,var(--card),var(--card2));border-bottom:1px solid var(--border);
+  padding:12px 16px;display:flex;align-items:center;justify-content:space-between;
+  position:sticky;top:0;z-index:100;
+}
+.topbar-brand{display:flex;flex-direction:column;}
+.topbar-title{font-family:'Orbitron',sans-serif;font-size:15px;font-weight:900;color:var(--green);text-shadow:var(--glow-sm);}
+.topbar-sub{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text-muted);letter-spacing:2px;}
+.topbar-status{display:flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--green3);}
+.topbar-status::before{content:'';width:7px;height:7px;border-radius:50%;background:var(--green3);box-shadow:0 0 6px var(--green3);animation:blink 2s infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* TAB NAV */
+.tab-nav{display:flex;overflow-x:auto;background:var(--card);border-bottom:1px solid var(--border);scrollbar-width:none;-ms-overflow-style:none;}
+.tab-nav::-webkit-scrollbar{display:none;}
+.tab-btn{
+  flex-shrink:0;padding:10px 16px;font-family:'Orbitron',sans-serif;font-size:10px;font-weight:700;
+  letter-spacing:1px;color:var(--text-muted);border-bottom:2px solid transparent;background:none;
+  border-top:none;border-left:none;border-right:none;cursor:pointer;white-space:nowrap;transition:all .2s;
+}
+.tab-btn.active{color:var(--green);border-bottom-color:var(--green);}
+.tab-btn:hover{color:var(--text-dim);}
+
+/* PANELS */
+.panel{display:none;padding:14px 16px;}
+.panel.active{display:block;}
+
+/* SECTION TITLE */
+.sec-title{
+  font-family:'Orbitron',sans-serif;font-size:12px;font-weight:700;letter-spacing:2px;
+  color:var(--green);margin-bottom:12px;display:flex;align-items:center;gap:8px;
+}
+.sec-title::before{content:'';width:3px;height:16px;background:var(--green);border-radius:2px;box-shadow:var(--glow-sm);}
+
+/* FORM ELEMENTS */
+.field-group{margin-bottom:14px;}
+.field-label{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-muted);letter-spacing:2px;margin-bottom:6px;display:block;}
+.field-input,.field-select{
+  width:100%;background:var(--card2);border:1px solid var(--border);border-radius:8px;
+  padding:11px 14px;color:var(--text);font-family:'Rajdhani',sans-serif;font-size:14px;
+  outline:none;transition:border-color .2s;
+}
+.field-input:focus,.field-select:focus{border-color:var(--green);box-shadow:var(--glow-sm);}
+.field-select option{background:var(--bg2);}
+
+/* DUAL INPUT */
+.dual-input{display:flex;flex-direction:column;gap:6px;}
+.dual-row{display:grid;grid-template-columns:1fr auto;gap:6px;align-items:center;}
+.dual-sep{text-align:center;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-muted);}
+.file-btn{
+  background:var(--border);border:1px dashed var(--border2);border-radius:8px;padding:11px;
+  color:var(--text-dim);font-family:'JetBrains Mono',monospace;font-size:11px;
+  cursor:pointer;text-align:center;transition:all .2s;display:block;
+}
+.file-btn:hover{border-color:var(--green);color:var(--green);}
+.file-btn input[type=file]{display:none;}
+.file-preview{width:100%;max-height:80px;border-radius:6px;object-fit:cover;border:1px solid var(--border);margin-top:4px;display:none;}
+
+/* ACTION BTN */
+.action-btn{
+  width:100%;padding:13px;border-radius:10px;border:none;
+  background:linear-gradient(135deg,var(--green),var(--green2));
+  color:#fff;font-family:'Orbitron',sans-serif;font-size:12px;font-weight:700;
+  letter-spacing:2px;cursor:pointer;transition:all .2s;margin-top:4px;
+}
+.action-btn:hover{box-shadow:var(--glow);transform:translateY(-1px);}
+.action-btn:disabled{opacity:.5;cursor:not-allowed;transform:none;}
+.action-btn.danger{background:linear-gradient(135deg,var(--red),#b91c1c);}
+.action-btn.warn{background:linear-gradient(135deg,var(--yellow),#d97706);}
+.action-btn.sm{padding:8px 14px;font-size:10px;width:auto;}
+
+/* PROGRESS BAR */
+.progress-wrap{margin:10px 0;display:none;}
+.progress-wrap.show{display:block;}
+.progress-label{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-dim);margin-bottom:5px;display:flex;justify-content:space-between;}
+.progress-bar{width:100%;height:6px;background:var(--border);border-radius:3px;overflow:hidden;}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--green),var(--green3));width:0;transition:width .2s;border-radius:3px;box-shadow:0 0 8px var(--green);}
+.progress-status{font-family:'JetBrains Mono',monospace;font-size:10px;margin-top:4px;color:var(--green3);}
+
+/* TOAST */
+.toast{
+  position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
+  background:var(--card2);border:1px solid var(--green);border-radius:10px;
+  padding:10px 20px;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--green);
+  z-index:9998;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap;
+  box-shadow:var(--glow);
+}
+.toast.show{opacity:1;}
+.toast.error{border-color:var(--red);color:var(--red);}
+
+/* ASSET LIST */
+.asset-list-item{
+  background:var(--card2);border:1px solid var(--border);border-radius:10px;
+  padding:12px;margin-bottom:10px;display:grid;grid-template-columns:50px 1fr auto;gap:10px;align-items:center;
+}
+.asset-list-thumb{width:50px;height:50px;border-radius:8px;object-fit:cover;background:var(--card);}
+.asset-list-thumb-placeholder{width:50px;height:50px;border-radius:8px;background:var(--card);display:flex;align-items:center;justify-content:center;font-size:20px;}
+.asset-list-info h4{font-family:'Orbitron',sans-serif;font-size:11px;font-weight:700;margin-bottom:3px;}
+.asset-list-info p{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text-muted);}
+.del-btn{background:rgba(239,68,68,.15);border:1px solid var(--red);color:var(--red);border-radius:6px;padding:6px 10px;font-size:10px;font-family:'Orbitron',sans-serif;cursor:pointer;transition:all .2s;white-space:nowrap;}
+.del-btn:hover{background:rgba(239,68,68,.3);}
+
+.spinner-sm{width:20px;height:20px;border:2px solid var(--border);border-top-color:var(--green);border-radius:50%;animation:spin .8s linear infinite;margin:16px auto;}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.divider{border:none;border-top:1px solid var(--border);margin:16px 0;}
+.cat-covers-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.info-box{background:rgba(16,185,129,.07);border:1px solid var(--border2);border-radius:8px;padding:10px 14px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-dim);line-height:1.6;margin-bottom:14px;}
+</style>
+</head>
+<body>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- PIN SCREEN -->
+<div id="pinScreen">
+  <div>
+    <div class="pin-logo">KEROxI<br>DEVELOPER</div>
+    <div class="pin-sub" style="text-align:center;margin-top:6px;">ADMIN CONSOLE</div>
+  </div>
+  <div class="pin-box">
+    <div class="pin-label">// ENTER ACCESS PIN</div>
+    <div class="pin-input-wrap">
+      <input class="pin-input" type="password" id="pinInput" maxlength="4" placeholder="••••" oninput="handlePinInput(this)"/>
+    </div>
+    <button class="pin-btn" onclick="checkPin()">ACCESS CONSOLE</button>
+    <div class="pin-error" id="pinError">⚠ INVALID PIN — ACCESS DENIED</div>
+  </div>
+  <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text-muted);text-align:center;letter-spacing:2px;">KEROX-ADMIN // SECURE ZONE</div>
+</div>
+
+<!-- MAIN APP -->
+<div id="mainApp">
+  <div class="topbar">
+    <div class="topbar-brand">
+      <div class="topbar-title">KEROxI ADMIN</div>
+      <div class="topbar-sub">// DEVELOPER CONSOLE</div>
+    </div>
+    <div class="topbar-status">LIVE</div>
+  </div>
+
+  <div class="tab-nav">
+    <button class="tab-btn active" onclick="switchTab('settings')">⚙ SETTINGS</button>
+    <button class="tab-btn" onclick="switchTab('covers')">🖼 COVERS</button>
+    <button class="tab-btn" onclick="switchTab('deploy')">🚀 DEPLOY</button>
+    <button class="tab-btn" onclick="switchTab('manage')">📋 MANAGE</button>
+  </div>
+
+  <!-- ── TAB: GLOBAL SETTINGS ───────────────────────────────── -->
+  <div class="panel active" id="tab-settings">
+    <div class="sec-title">GLOBAL SETTINGS</div>
+    <div class="info-box">// Update app logo, banner text, and social media links. Changes reflect in the User App instantly.</div>
+
+    <!-- APP LOGO -->
+    <div class="field-group">
+      <label class="field-label">APP LOGO</label>
+      <div class="dual-input">
+        <input class="field-input" type="url" id="logoUrl" placeholder="Paste image URL..."/>
+        <div class="dual-sep">— OR —</div>
+        <label class="file-btn">
+          📁 Upload from Gallery
+          <input type="file" accept="image/*" onchange="handleFileSelect(this,'logoPreview','logoUrl')"/>
+        </label>
+        <img id="logoPreview" class="file-preview"/>
+      </div>
+    </div>
+
+    <!-- BANNER TEXT -->
+    <div class="field-group">
+      <label class="field-label">MARQUEE BANNER TEXT</label>
+      <input class="field-input" type="text" id="bannerText" placeholder="⚡ Your banner text here..."/>
+    </div>
+
+    <hr class="divider"/>
+    <div class="sec-title" style="font-size:11px;">SOCIAL LINKS</div>
+
+    <div class="field-group">
+      <label class="field-label">YOUTUBE URL</label>
+      <input class="field-input" type="url" id="ytUrl" placeholder="https://youtube.com/@channel"/>
+    </div>
+    <div class="field-group">
+      <label class="field-label">INSTAGRAM URL</label>
+      <input class="field-input" type="url" id="igUrl" placeholder="https://instagram.com/..."/>
+    </div>
+    <div class="field-group">
+      <label class="field-label">WHATSAPP URL</label>
+      <input class="field-input" type="url" id="waUrl" placeholder="https://wa.me/..."/>
+    </div>
+    <div class="field-group">
+      <label class="field-label">TELEGRAM URL</label>
+      <input class="field-input" type="url" id="tgUrl" placeholder="https://t.me/..."/>
+    </div>
+
+    <button class="action-btn" onclick="saveSettings()">💾 SAVE SETTINGS</button>
+    <button class="action-btn warn" onclick="loadSettingsIntoForm()" style="margin-top:8px;">🔄 LOAD CURRENT</button>
+  </div>
+
+  <!-- ── TAB: CATEGORY COVERS ──────────────────────────────── -->
+  <div class="panel" id="tab-covers">
+    <div class="sec-title">CATEGORY COVER IMAGES</div>
+    <div class="info-box">// Set cover images for each category card shown in the User App home screen.</div>
+    <div class="cat-covers-grid">
+      <div>
+        <div class="field-label" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-muted);letter-spacing:2px;margin-bottom:6px;">🎭 BUNDLES</div>
+        <div class="dual-input">
+          <input class="field-input" type="url" id="catBundles" placeholder="URL..."/>
+          <label class="file-btn" style="font-size:10px;padding:8px;">
+            📁 Upload
+            <input type="file" accept="image/*" onchange="handleFileSelect(this,'prevBundles','catBundles')"/>
+          </label>
+          <img id="prevBundles" class="file-preview"/>
+        </div>
+      </div>
+      <div>
+        <div class="field-label" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-muted);letter-spacing:2px;margin-bottom:6px;">💃 EMOTES</div>
+        <div class="dual-input">
+          <input class="field-input" type="url" id="catEmotes" placeholder="URL..."/>
+          <label class="file-btn" style="font-size:10px;padding:8px;">
+            📁 Upload
+            <input type="file" accept="image/*" onchange="handleFileSelect(this,'prevEmotes','catEmotes')"/>
+          </label>
+          <img id="prevEmotes" class="file-preview"/>
+        </div>
+      </div>
+      <div>
+        <div class="field-label" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-muted);letter-spacing:2px;margin-bottom:6px;">🔫 WEAPONS</div>
+        <div class="dual-input">
+          <input class="field-input" type="url" id="catWeapons" placeholder="URL..."/>
+          <label class="file-btn" style="font-size:10px;padding:8px;">
+            📁 Upload
+            <input type="file" accept="image/*" onchange="handleFileSelect(this,'prevWeapons','catWeapons')"/>
+          </label>
+          <img id="prevWeapons" class="file-preview"/>
+        </div>
+      </div>
+      <div>
+        <div class="field-label" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-muted);letter-spacing:2px;margin-bottom:6px;">🗺️ MAPS</div>
+        <div class="dual-input">
+          <input class="field-input" type="url" id="catMaps" placeholder="URL..."/>
+          <label class="file-btn" style="font-size:10px;padding:8px;">
+            📁 Upload
+            <input type="file" accept="image/*" onchange="handleFileSelect(this,'prevMaps','catMaps')"/>
+          </label>
+          <img id="prevMaps" class="file-preview"/>
+        </div>
+      </div>
+    </div>
+    <button class="action-btn" onclick="saveCategoryCovers()" style="margin-top:16px;">💾 SAVE COVERS</button>
+    <button class="action-btn warn" onclick="loadCoversIntoForm()" style="margin-top:8px;">🔄 LOAD CURRENT</button>
+  </div>
+
+  <!-- ── TAB: DEPLOY ────────────────────────────────────────── -->
+  <div class="panel" id="tab-deploy">
+    <div class="sec-title">MASTER DEPLOY</div>
+    <div class="info-box">// Upload a new skin configuration. Fill all fields and select the config file to begin deployment.</div>
+
+    <div class="field-group">
+      <label class="field-label">CATEGORY</label>
+      <select class="field-select" id="depCategory">
+        <option value="bundles">🎭 Bundles</option>
+        <option value="emotes">💃 Emotes</option>
+        <option value="weapons">🔫 Weapons</option>
+        <option value="maps">🗺️ Maps</option>
+      </select>
+    </div>
+
+    <div class="field-group">
+      <label class="field-label">TARGET GAME</label>
+      <select class="field-select" id="depVersion">
+        <option value="ff">🔥 Free Fire (Normal)</option>
+        <option value="ffmax">💎 FF MAX (Ultra HD)</option>
+      </select>
+    </div>
+
+    <hr class="divider"/>
+    <div class="sec-title" style="font-size:10px;margin-bottom:10px;">TARGET ITEM (ORIGINAL)</div>
+
+    <div class="field-group">
+      <label class="field-label">TARGET ITEM NAME</label>
+      <input class="field-input" type="text" id="depTargetName" placeholder="e.g. Default Outfit"/>
+    </div>
+    <div class="field-group">
+      <label class="field-label">TARGET ITEM IMAGE</label>
+      <div class="dual-input">
+        <input class="field-input" type="url" id="depTargetUrl" placeholder="Paste image URL..."/>
+        <div class="dual-sep">— OR —</div>
+        <label class="file-btn">
+          📁 Upload Target Image
+          <input type="file" accept="image/*" onchange="handleFileSelect(this,'prevTargetImg','depTargetUrl')"/>
+        </label>
+        <img id="prevTargetImg" class="file-preview"/>
+      </div>
+    </div>
+
+    <hr class="divider"/>
+    <div class="sec-title" style="font-size:10px;margin-bottom:10px;">VIP RESULT ITEM</div>
+
+    <div class="field-group">
+      <label class="field-label">VIP RESULT NAME</label>
+      <input class="field-input" type="text" id="depResultName" placeholder="e.g. Dragon Bundle VIP"/>
+    </div>
+    <div class="field-group">
+      <label class="field-label">VIP RESULT IMAGE</label>
+      <div class="dual-input">
+        <input class="field-input" type="url" id="depResultUrl" placeholder="Paste image URL..."/>
+        <div class="dual-sep">— OR —</div>
+        <label class="file-btn">
+          📁 Upload Result Image
+          <input type="file" accept="image/*" onchange="handleFileSelect(this,'prevResultImg','depResultUrl')"/>
+        </label>
+        <img id="prevResultImg" class="file-preview"/>
+      </div>
+    </div>
+
+    <hr class="divider"/>
+    <div class="sec-title" style="font-size:10px;margin-bottom:10px;">CONFIG FILE</div>
+
+    <div class="field-group">
+      <label class="field-label">CONFIG / ZIP FILE</label>
+      <label class="file-btn" id="configFileLabel">
+        📦 Select .zip / .rar / .config file
+        <input type="file" id="configFileInput" accept=".zip,.rar,.config,.pak" onchange="handleConfigFileSelect(this)"/>
+      </label>
+      <div id="configFileName" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--green3);margin-top:6px;"></div>
+    </div>
+
+    <!-- PROGRESS BAR -->
+    <div class="progress-wrap" id="uploadProgress">
+      <div class="progress-label">
+        <span>UPLOADING FILE...</span>
+        <span id="progressPct">0%</span>
+      </div>
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+      <div class="progress-status" id="progressStatus">Initializing upload...</div>
+    </div>
+
+    <button class="action-btn" id="deployBtn" onclick="deployAsset()">🚀 DEPLOY ASSET</button>
+  </div>
+
+  <!-- ── TAB: MANAGE ────────────────────────────────────────── -->
+  <div class="panel" id="tab-manage">
+    <div class="sec-title">DATA MANAGER</div>
+    <div class="info-box">// Browse deployed assets and remove entries. Deletion is permanent and cannot be undone.</div>
+
+    <div class="field-group">
+      <label class="field-label">BROWSE CATEGORY</label>
+      <select class="field-select" id="manageCategory" onchange="loadManageList()">
+        <option value="bundles">🎭 Bundles</option>
+        <option value="emotes">💃 Emotes</option>
+        <option value="weapons">🔫 Weapons</option>
+        <option value="maps">🗺️ Maps</option>
+      </select>
+    </div>
+    <div class="field-group">
+      <label class="field-label">GAME VERSION</label>
+      <select class="field-select" id="manageVersion" onchange="loadManageList()">
+        <option value="ff">🔥 Free Fire</option>
+        <option value="ffmax">💎 FF MAX</option>
+      </select>
+    </div>
+
+    <div id="manageList">
+      <div class="spinner-sm"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Firebase SDK (Compat) -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+
+<script>
+// ─── FIREBASE INIT ────────────────────────────────────────────────────────────
+const firebaseConfig = {
+  apiKey: "AIzaSyD-v3ogv58k1R4EOFu4lICPGuD6E650eeA",
+  projectId: "gen-lang-client-0416916763",
+  databaseURL: "https://gen-lang-client-0416916763-default-rtdb.firebaseio.com",
+  storageBucket: "gen-lang-client-0416916763.appspot.com"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+const storage = firebase.storage();
+
+// ─── PIN ──────────────────────────────────────────────────────────────────────
+const ADMIN_PIN = '8899';
+
+function handlePinInput(input) {
+  if (input.value.length === 4) setTimeout(checkPin, 100);
+}
+
+function checkPin() {
+  const val = document.getElementById('pinInput').value;
+  if (val === ADMIN_PIN) {
+    document.getElementById('pinScreen').style.display = 'none';
+    document.getElementById('mainApp').classList.add('show');
+    loadSettingsIntoForm();
+    loadManageList();
+  } else {
+    document.getElementById('pinError').classList.add('show');
+    document.getElementById('pinInput').value = '';
+    setTimeout(() => document.getElementById('pinError').classList.remove('show'), 2000);
+  }
+}
+
+document.getElementById('pinInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') checkPin();
+});
+
+// ─── TABS ─────────────────────────────────────────────────────────────────────
+function switchTab(id) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  event.currentTarget.classList.add('active');
+  if (id === 'manage') loadManageList();
+}
+
+// ─── TOAST ────────────────────────────────────────────────────────────────────
+function toast(msg, type = 'ok') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (type === 'err' ? ' error' : '');
+  setTimeout(() => t.classList.remove('show'), 3200);
+}
+
+// ─── FILE SELECT → UPLOAD TO STORAGE ─────────────────────────────────────────
+async function handleFileSelect(input, previewId, urlFieldId) {
+  if (!input.files[0]) return;
+  const file = input.files[0];
+  const preview = document.getElementById(previewId);
+
+  // Show local preview immediately
+  const reader = new FileReader();
+  reader.onload = e => {
+    preview.src = e.target.result;
+    preview.style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+
+  // Upload to Firebase Storage
+  toast('⏫ Uploading image...', 'ok');
+  try {
+    const ref = storage.ref(`images/${Date.now()}_${file.name}`);
+    await ref.put(file);
+    const url = await ref.getDownloadURL();
+    document.getElementById(urlFieldId).value = url;
+    preview.src = url;
+    toast('✅ Image uploaded!', 'ok');
+  } catch (e) {
+    toast('❌ Upload failed: ' + e.message, 'err');
+    console.error(e);
+  }
+}
+
+function handleConfigFileSelect(input) {
+  if (!input.files[0]) return;
+  const name = input.files[0].name;
+  document.getElementById('configFileName').textContent = `Selected: ${name}`;
+  document.getElementById('configFileLabel').style.borderColor = 'var(--green)';
+}
+
+// ─── SETTINGS ────────────────────────────────────────────────────────────────
+async function saveSettings() {
+  const data = {
+    logoUrl: document.getElementById('logoUrl').value.trim(),
+    bannerText: document.getElementById('bannerText').value.trim(),
+    youtube: document.getElementById('ytUrl').value.trim(),
+    instagram: document.getElementById('igUrl').value.trim(),
+    whatsapp: document.getElementById('waUrl').value.trim(),
+    telegram: document.getElementById('tgUrl').value.trim(),
+  };
+  try {
+    await db.ref('settings').update(data);
+    toast('✅ Settings saved!', 'ok');
+  } catch (e) {
+    toast('❌ Error: ' + e.message, 'err');
+  }
+}
+
+async function loadSettingsIntoForm() {
+  try {
+    const snap = await db.ref('settings').once('value');
+    const s = snap.val() || {};
+    if (s.logoUrl) { document.getElementById('logoUrl').value = s.logoUrl; const p = document.getElementById('logoPreview'); p.src=s.logoUrl; p.style.display='block'; }
+    if (s.bannerText) document.getElementById('bannerText').value = s.bannerText;
+    if (s.youtube) document.getElementById('ytUrl').value = s.youtube;
+    if (s.instagram) document.getElementById('igUrl').value = s.instagram;
+    if (s.whatsapp) document.getElementById('waUrl').value = s.whatsapp;
+    if (s.telegram) document.getElementById('tgUrl').value = s.telegram;
+    toast('🔄 Settings loaded', 'ok');
+  } catch(e) { toast('❌ '+e.message,'err'); }
+}
+
+// ─── COVERS ───────────────────────────────────────────────────────────────────
+async function saveCategoryCovers() {
+  const data = {
+    cat_bundles: document.getElementById('catBundles').value.trim(),
+    cat_emotes: document.getElementById('catEmotes').value.trim(),
+    cat_weapons: document.getElementById('catWeapons').value.trim(),
+    cat_maps: document.getElementById('catMaps').value.trim(),
+  };
+  // Remove empty
+  Object.keys(data).forEach(k => { if (!data[k]) delete data[k]; });
+  try {
+    await db.ref('settings').update(data);
+    toast('✅ Covers saved!', 'ok');
+  } catch(e) { toast('❌ '+e.message,'err'); }
+}
+
+async function loadCoversIntoForm() {
+  try {
+    const snap = await db.ref('settings').once('value');
+    const s = snap.val() || {};
+    const cats = ['bundles','emotes','weapons','maps'];
+    cats.forEach(cat => {
+      const v = s[`cat_${cat}`];
+      if (v) {
+        document.getElementById(`cat${cap(cat)}`).value = v;
+        const p = document.getElementById(`prev${cap(cat)}`);
+        p.src = v; p.style.display = 'block';
+      }
+    });
+    toast('🔄 Covers loaded','ok');
+  } catch(e){ toast('❌ '+e.message,'err'); }
+}
+
+// ─── DEPLOY ASSET ─────────────────────────────────────────────────────────────
+async function deployAsset() {
+  const category = document.getElementById('depCategory').value;
+  const version  = document.getElementById('depVersion').value;
+  const targetName = document.getElementById('depTargetName').value.trim();
+  const resultName = document.getElementById('depResultName').value.trim();
+  const targetImg  = document.getElementById('depTargetUrl').value.trim();
+  const resultImg  = document.getElementById('depResultUrl').value.trim();
+  const configFile = document.getElementById('configFileInput').files[0];
+
+  if (!targetName || !resultName) { toast('⚠ Fill in both item names', 'err'); return; }
+  if (!configFile) { toast('⚠ Select a config file', 'err'); return; }
+
+  const btn = document.getElementById('deployBtn');
+  btn.disabled = true;
+  btn.textContent = '⏳ DEPLOYING...';
+
+  // First handle image uploads if files selected (already done via handleFileSelect)
+  // Now upload config file with progress
+  const progressWrap = document.getElementById('uploadProgress');
+  const progressFill = document.getElementById('progressFill');
+  const progressPct  = document.getElementById('progressPct');
+  const progressStatus = document.getElementById('progressStatus');
+
+  progressWrap.classList.add('show');
+  progressFill.style.width = '0%';
+  progressPct.textContent = '0%';
+  progressStatus.textContent = 'Initializing...';
+
+  try {
+    const storageRef = storage.ref(`configs/${category}/${version}/${Date.now()}_${configFile.name}`);
+    const uploadTask = storageRef.put(configFile);
+
+    const fileUrl = await new Promise((resolve, reject) => {
+      uploadTask.on(
+        firebase.storage.TaskEvent.STATE_CHANGED,
+        (snapshot) => {
+          const pct = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
+          progressFill.style.width = pct + '%';
+          progressPct.textContent = pct + '%';
+          progressStatus.textContent = `Uploading... ${pct}% (${formatBytes(snapshot.bytesTransferred)} / ${formatBytes(snapshot.totalBytes)})`;
+        },
+        (error) => {
+          reject(error);
+        },
+        async () => {
+          progressStatus.textContent = '✅ Upload complete! Saving to database...';
+          const url = await uploadTask.snapshot.ref.getDownloadURL();
+          resolve(url);
+        }
+      );
+    });
+
+    // Save to Realtime DB
+    const newRef = db.ref(`assets/${category}/${version}`).push();
+    await newRef.set({
+      targetName,
+      resultName,
+      targetImg,
+      resultImg,
+      fileUrl,
+      fileName: configFile.name,
+      deployedAt: Date.now()
+    });
+
+    progressStatus.textContent = '✅ Deployed successfully!';
+    toast('🚀 Asset deployed!', 'ok');
+
+    // Reset form
+    setTimeout(() => {
+      document.getElementById('depTargetName').value = '';
+      document.getElementById('depResultName').value = '';
+      document.getElementById('depTargetUrl').value = '';
+      document.getElementById('depResultUrl').value = '';
+      document.getElementById('depResultUrl').value = '';
+      document.getElementById('configFileInput').value = '';
+      document.getElementById('configFileName').textContent = '';
+      document.getElementById('prevTargetImg').style.display='none';
+      document.getElementById('prevResultImg').style.display='none';
+      progressWrap.classList.remove('show');
+      progressFill.style.width='0';
+    }, 2000);
+
+  } catch(e) {
+    toast('❌ Deploy failed: ' + e.message, 'err');
+    progressStatus.textContent = '❌ Error: ' + e.message;
+    console.error(e);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '🚀 DEPLOY ASSET';
+  }
+}
+
+function formatBytes(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024*1024) return (bytes/1024).toFixed(1) + ' KB';
+  return (bytes/(1024*1024)).toFixed(2) + ' MB';
+}
+
+// ─── MANAGE / DELETE ─────────────────────────────────────────────────────────
+async function loadManageList() {
+  const cat = document.getElementById('manageCategory').value;
+  const ver = document.getElementById('manageVersion').value;
+  const container = document.getElementById('manageList');
+  container.innerHTML = '<div class="spinner-sm"></div>';
+  try {
+    const snap = await db.ref(`assets/${cat}/${ver}`).once('value');
+    const data = snap.val();
+    if (!data) {
+      container.innerHTML = `<div style="text-align:center;padding:30px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-muted);">// NO ASSETS FOUND</div>`;
+      return;
+    }
+    const items = Object.entries(data).map(([k,v])=>({id:k,...v}));
+    let html = `<div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-muted);margin-bottom:10px;">${items.length} ASSETS IN ${cat.toUpperCase()} / ${ver.toUpperCase()}</div>`;
+    items.forEach(item => {
+      const thumb = item.targetImg
+        ? `<img class="asset-list-thumb" src="${item.targetImg}" alt="" onerror="this.style.display='none'">`
+        : `<div class="asset-list-thumb-placeholder">🎮</div>`;
+      const date = item.deployedAt ? new Date(item.deployedAt).toLocaleDateString() : '—';
+      html += `
+        <div class="asset-list-item">
+          ${thumb}
+          <div class="asset-list-info">
+            <h4>${item.targetName || 'Unknown'}</h4>
+            <p>→ ${item.resultName || '—'}</p>
+            <p>${item.fileName || ''} • ${date}</p>
+          </div>
+          <button class="del-btn" onclick="deleteAsset('${cat}','${ver}','${item.id}')">🗑 DEL</button>
+        </div>`;
+    });
+    container.innerHTML = html;
+  } catch(e) {
+    container.innerHTML = `<div style="color:var(--red);font-family:'JetBrains Mono',monospace;font-size:11px;padding:20px;">Error: ${e.message}</div>`;
+  }
+}
+
+async function deleteAsset(cat, ver, id) {
+  if (!confirm('Delete this asset permanently?')) return;
+  try {
+    await db.ref(`assets/${cat}/${ver}/${id}`).remove();
+    toast('🗑 Asset deleted', 'ok');
+    await loadManageList();
+  } catch(e) {
+    toast('❌ Delete failed: ' + e.message, 'err');
+  }
+}
+
+// ─── HELPERS ─────────────────────────────────────────────────────────────────
+function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+</script>
+</body>
+</html>
